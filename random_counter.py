@@ -10,13 +10,13 @@ def generate_random_number_list(start, end):
 
 def insert_random_mistake(number):
     mistakes = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']
-    if random.random() < 0.10:  # 10% chance to insert a mistake
+    if random.random() < 0.05:  # 5% chance to insert a mistake
         mistake = random.choice(mistakes)
         return f"{number}{mistake}", True  # Return the mistake and flag it
     return str(number), False  # No mistake, just return the number
 
 def get_random_interval():
-    return random.uniform(0.7, 2.3)
+    return random.uniform(0.7, 1.7)
 
 def countdown_timer(seconds):
     for i in range(seconds, 0, -1):
