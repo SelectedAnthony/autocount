@@ -41,10 +41,10 @@ def main():
     paused = False
 
     for number in random_numbers:
-        if keyboard.is_pressed('F4'):
+        if keyboard.is_pressed('end'):
             paused = not paused
             status = "PAUSED" if paused else "RUNNING"
-            print(f"{status} - Click F4 to {'resume' if paused else 'pause'}")
+            print(f"{status} - Click END to {'resume' if paused else 'pause'}")
             time.sleep(0.5)  # Debounce delay
 
         if paused:
