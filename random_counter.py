@@ -9,10 +9,10 @@ def generate_random_number_list(start, end):
 
 def insert_random_mistake(number):
     mistakes = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']
-    if random.random() < 0.05:  # 5% chance to insert a mistake
+    if random.random() < 0.15:  # 15% chance to insert a mistake
         mistake = random.choice(mistakes)
-        return f"{number}{mistake}"
-    return str(number)
+        return f"{number}{mistake}", True  # Return the mistake and flag it
+    return str(number), False  # No mistake, just return the number
 
 def get_random_interval():
     return random.uniform(0.7, 2.3)
@@ -38,9 +38,18 @@ def main():
     random_numbers = generate_random_number_list(1, count_limit)
 
     for number in random_numbers:
-        output = insert_random_mistake(number)
-        type_with_delay(output)  # Type the output with delay
-        print(f"Successfully Sent: {output}")  # Print confirmation message
+        output, is_mistake = insert_random_mistake(number)
+        
+        # Type the output with delay
+        type_with_delay(output)
+        
+        if is_mistake:
+            print(f"(Mistake) Successfully Sent: {output} - Resending")
+            # Resend without the mistake
+            corrected_output = str(number)
+            type_with_delay(corrected_output)
+        
+        print(f"Successfully Sent: {output if not is_mistake else corrected_output}")  # Print confirmation message
         time.sleep(get_random_interval())  # Wait for a random interval
 
 if __name__ == "__main__":
