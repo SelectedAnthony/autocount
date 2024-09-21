@@ -15,13 +15,19 @@ def insert_random_mistake(number):
     return str(number)
 
 def get_random_interval():
-    return random.uniform(0.5, 3.5)
+    return random.uniform(0.7, 2.3)
 
 def countdown_timer(seconds):
     for i in range(seconds, 0, -1):
         print(f"Activating in {i} seconds...", end='\r')
         time.sleep(1)
     print(" " * 30, end='\r')  # Clear the line
+
+def type_with_delay(text):
+    for char in text:
+        pyautogui.typewrite(char)  # Type each character
+        time.sleep(0.05)  # Delay between characters
+    pyautogui.press('enter')  # Simulate pressing Enter
 
 def main():
     input("Type '.start' to begin counting: ")
@@ -33,9 +39,8 @@ def main():
 
     for number in random_numbers:
         output = insert_random_mistake(number)
-        print(output)
-        pyautogui.typewrite(output)  # Simulate typing the output
-        pyautogui.press('enter')  # Simulate pressing Enter
+        type_with_delay(output)  # Type the output with delay
+        print(f"Successfully Sent: {output}")  # Print confirmation message
         time.sleep(get_random_interval())  # Wait for a random interval
 
 if __name__ == "__main__":
