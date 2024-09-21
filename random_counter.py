@@ -1,6 +1,7 @@
 import random
 import time
 import pyautogui
+import keyboard  # Make sure to install the keyboard module
 
 def generate_random_number_list(start, end):
     numbers = list(range(start, end + 1))
@@ -9,7 +10,7 @@ def generate_random_number_list(start, end):
 
 def insert_random_mistake(number):
     mistakes = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']
-    if random.random() < 0.15:  # 15% chance to insert a mistake
+    if random.random() < 0.10:  # 10% chance to insert a mistake
         mistake = random.choice(mistakes)
         return f"{number}{mistake}", True  # Return the mistake and flag it
     return str(number), False  # No mistake, just return the number
@@ -37,7 +38,19 @@ def main():
     count_limit = 500000
     random_numbers = generate_random_number_list(1, count_limit)
 
+    paused = False
+
     for number in random_numbers:
+        if keyboard.is_pressed('F4'):
+            paused = not paused
+            status = "PAUSED" if paused else "RUNNING"
+            print(f"{status} - Click F4 to {'resume' if paused else 'pause'}")
+            time.sleep(0.5)  # Debounce delay
+
+        if paused:
+            time.sleep(0.1)  # Sleep while paused
+            continue
+
         output, is_mistake = insert_random_mistake(number)
         
         # Type the output with delay
