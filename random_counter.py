@@ -2,9 +2,8 @@ import random
 import time
 import threading
 import pyautogui
-import keyboard  # Make sure to install the keyboard module
+import keyboard
 
-# Global variable to control the pause state
 paused = False
 
 def toggle_pause():
@@ -20,10 +19,10 @@ def generate_random_number_list(start, end):
 
 def insert_random_mistake(number):
     mistakes = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']
-    if random.random() < 0.05:  # 5% chance to insert a mistake
+    if random.random() < 0.05: 
         mistake = random.choice(mistakes)
-        return f"{number}{mistake}", True  # Return the mistake and flag it
-    return str(number), False  # No mistake, just return the number
+        return f"{number}{mistake}", True 
+    return str(number), False  
 
 def get_random_interval():
     return random.uniform(0.7, 1.7)
@@ -32,20 +31,19 @@ def countdown_timer(seconds):
     for i in range(seconds, 0, -1):
         print(f"Activating in {i} seconds...", end='\r')
         time.sleep(1)
-    print(" " * 30, end='\r')  # Clear the line
+    print(" " * 30, end='\r')  
 
 def type_with_delay(text):
     for char in text:
-        while paused:  # Check if paused
-            time.sleep(0.1)  # Sleep while paused
-        pyautogui.typewrite(char)  # Type each character
-        time.sleep(0.05)  # Delay between characters
-    pyautogui.press('enter')  # Simulate pressing Enter
+        while paused:  
+            time.sleep(0.1) 
+        pyautogui.typewrite(char)  
+        time.sleep(0.05)  
+    pyautogui.press('enter')  
 
 def main():
     global paused
 
-    # Start a thread to listen for the END key
     threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()
 
     input("Type '.start' to begin counting: ")
