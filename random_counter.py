@@ -10,8 +10,8 @@ from colorama import init, Fore, Style
 init()
 
 paused = False
-stop_time_reached = False
 stop_time = None
+resume_time = None
 
 # Function to toggle pause state using 'End' key
 def toggle_pause():
@@ -19,21 +19,29 @@ def toggle_pause():
     paused = not paused
     status = "RUNNING" if not paused else "PAUSED"
     color = Fore.LIGHTGREEN_EX if not paused else Fore.LIGHTRED_EX
-    print(f"{color}{status}{Style.RESET_ALL} - Click END to {'pause' if not paused else 'resume'}")
+    print(f"{color}{status}{Style.RESET_ALL} - Click END to set resume and stop times.")
 
-    if paused:  # If paused, prompt for new stop time
-        new_stop_time = input("Enter new stop time (HH:MM AM/PM) or press Enter to keep current time: ")
-        if new_stop_time:
-            set_new_stop_time(new_stop_time)
+# Function to set new stop and resume times
+def set_new_times():
+    global stop_time, resume_time
+    resume_time_input = input("Enter resume time (HH:MM AM/PM) or leave empty to start immediately: ")
+    stop_time_input = input("Enter stop time (HH:MM AM/PM) or leave empty to run indefinitely: ")
 
-# Function to set a new stop time
-def set_new_stop_time(new_stop_time):
-    global stop_time
-    try:
-        stop_time = datetime.strptime(new_stop_time, "%I:%M %p").time()
-        print(f"Scheduled to stop at {stop_time.strftime('%I:%M %p')}")
-    except ValueError:
-        print("Invalid stop time format. Please use HH:MM AM/PM.")
+    # Set resume time
+    if resume_time_input:
+        try:
+            resume_time = datetime.strptime(resume_time_input, "%I:%M %p").time()
+            print(f"Scheduled to resume at {resume_time.strftime('%I:%M %p')}")
+        except ValueError:
+            print("Invalid resume time format.")
+
+    # Set stop time
+    if stop_time_input:
+        try:
+            stop_time = datetime.strptime(stop_time_input, "%I:%M %p").time()
+            print(f"Scheduled to stop at {stop_time.strftime('%I:%M %p')}")
+        except ValueError:
+            print("Invalid stop time format.")
 
 # Generate a shuffled list of numbers ending in 8 up to 500,000
 def generate_random_number_list(start, end):
@@ -61,40 +69,37 @@ def countdown_timer(seconds):
         time.sleep(1)
     print(" " * 30, end='\r')  # Clear the line
 
-# Wait until the scheduled start time
-def wait_until_start(start_time):
-    now = datetime.now()
-    start_datetime = datetime.combine(now.date(), start_time)
-
-    if now > start_datetime:
-        start_datetime += timedelta(days=1)  # Start the next day if the time has passed
-
-    countdown_seconds = (start_datetime - now).total_seconds()
-    print(f"Waiting to start at {start_datetime.strftime('%Y-%m-%d %I:%M %p')}")
-    countdown_timer(int(countdown_seconds))
-
 # Automatically handle scheduled pauses and stops
 def run_scheduler():
-    global stop_time_reached
+    global paused
     while True:
-        if stop_time:  # If stop time is set
-            now = datetime.now()
+        now = datetime.now()
+        
+        # Check for stop time
+        if stop_time:
             stop_datetime = datetime.combine(now.date(), stop_time)
 
             # If the stop time is in the past today, set it for tomorrow
-            if now > stop_datetime:
-                stop_datetime += timedelta(days=1)
-
-            # If it's time to stop, pause the execution
-            if now >= stop_datetime and not paused:
+            if now >= stop_datetime:
                 print(f"{Fore.LIGHTRED_EX}Automatically Stopping - Didn't resume before designated stop time.{Style.RESET_ALL}")
                 toggle_pause()  # Pause the execution
-            
+                stop_time = None  # Reset stop time to prevent repeated pauses
+
+        # Check for resume time
+        if resume_time:
+            resume_datetime = datetime.combine(now.date(), resume_time)
+
+            # If the resume time is in the past today, set it for tomorrow
+            if now >= resume_datetime:
+                paused = False
+                print(f"{Fore.LIGHTGREEN_EX}Resuming execution at {resume_time.strftime('%I:%M %p')}{Style.RESET_ALL}")
+                resume_time = None  # Reset resume time
+
         time.sleep(1)
 
 def main():
-    global stop_time
-    threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()
+    global stop_time, resume_time
+    threading.Thread(target=lambda: keyboard.add_hotkey('end', set_new_times)).start()
     
     # Schedule prompts for start and stop times
     start_time_input = input("Enter the start time (HH:MM AM/PM) or leave empty to start immediately: ")
@@ -109,6 +114,7 @@ def main():
         except ValueError:
             print("Invalid start time format. Starting immediately.")
 
+    # Set stop time if provided
     if stop_time_input:
         try:
             stop_time = datetime.strptime(stop_time_input, "%I:%M %p").time()
