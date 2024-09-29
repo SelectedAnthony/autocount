@@ -124,7 +124,7 @@ def main():
     count_limit = 500000
     random_numbers = generate_random_number_list(1, count_limit)
 
-    threading.Thread(target=run_scheduler).start()  # Start the scheduler in a separate thread
+    threading.Thread(target=run_scheduler, daemon=True).start()  # Start the scheduler in a separate thread
 
     for number in random_numbers:
         while paused:  # Wait if paused
