@@ -74,7 +74,7 @@ def run_scheduler():
     global paused
     while True:
         now = datetime.now()
-        
+
         # Check for stop time
         if stop_time:
             stop_datetime = datetime.combine(now.date(), stop_time)
@@ -82,7 +82,7 @@ def run_scheduler():
             # If the stop time is in the past today, set it for tomorrow
             if now >= stop_datetime:
                 print(f"{Fore.LIGHTRED_EX}Automatically Stopping - Didn't resume before designated stop time.{Style.RESET_ALL}")
-                toggle_pause()  # Pause the execution
+                paused = True  # Pause the execution
                 stop_time = None  # Reset stop time to prevent repeated pauses
 
         # Check for resume time
