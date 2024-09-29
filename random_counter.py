@@ -21,6 +21,20 @@ def toggle_pause():
     color = Fore.LIGHTGREEN_EX if not paused else Fore.LIGHTRED_EX
     print(f"{color}{status}{Style.RESET_ALL} - Click END to {'pause' if not paused else 'resume'}")
 
+    if paused:  # If paused, prompt for new stop time
+        new_stop_time = input("Enter new stop time (HH:MM) or press Enter to keep current time: ")
+        if new_stop_time:
+            set_new_stop_time(new_stop_time)
+
+# Function to set a new stop time
+def set_new_stop_time(new_stop_time):
+    global stop_time
+    try:
+        stop_time = datetime.strptime(new_stop_time, "%H:%M").time()
+        print(f"Scheduled to stop at {stop_time}")
+    except ValueError:
+        print("Invalid stop time format.")
+
 # Generate a shuffled list of numbers ending in 8 up to 500,000
 def generate_random_number_list(start, end):
     numbers = [i for i in range(start, end + 1) if i % 10 == 8]
