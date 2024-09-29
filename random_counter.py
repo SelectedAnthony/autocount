@@ -12,6 +12,7 @@ init()
 paused = False
 stop_time = None
 resume_time = None
+random_numbers = []
 
 # Function to toggle pause state using 'End' key
 def toggle_pause():
@@ -24,24 +25,25 @@ def toggle_pause():
 # Function to set new stop and resume times
 def set_new_times():
     global stop_time, resume_time
-    resume_time_input = input("Enter resume time (HH:MM AM/PM) or leave empty to continue paused: ")
-    stop_time_input = input("Enter stop time (HH:MM AM/PM) or leave empty to run indefinitely: ")
+    if paused:
+        resume_time_input = input("Enter resume time (HH:MM AM/PM) or leave empty to continue paused: ")
+        stop_time_input = input("Enter stop time (HH:MM AM/PM) or leave empty to run indefinitely: ")
 
-    # Set resume time
-    if resume_time_input:
-        try:
-            resume_time = datetime.strptime(resume_time_input, "%I:%M %p").time()
-            print(f"Scheduled to resume at {resume_time.strftime('%I:%M %p')}")
-        except ValueError:
-            print("Invalid resume time format.")
+        # Set resume time
+        if resume_time_input:
+            try:
+                resume_time = datetime.strptime(resume_time_input, "%I:%M %p").time()
+                print(f"Scheduled to resume at {resume_time.strftime('%I:%M %p')}")
+            except ValueError:
+                print("Invalid resume time format.")
 
-    # Set stop time
-    if stop_time_input:
-        try:
-            stop_time = datetime.strptime(stop_time_input, "%I:%M %p").time()
-            print(f"Scheduled to stop at {stop_time.strftime('%I:%M %p')}")
-        except ValueError:
-            print("Invalid stop time format.")
+        # Set stop time
+        if stop_time_input:
+            try:
+                stop_time = datetime.strptime(stop_time_input, "%I:%M %p").time()
+                print(f"Scheduled to stop at {stop_time.strftime('%I:%M %p')}")
+            except ValueError:
+                print("Invalid stop time format.")
 
 # Generate a shuffled list of numbers ending in 8 up to 500,000
 def generate_random_number_list(start, end):
@@ -64,7 +66,7 @@ def type_with_delay(text):
 
 # Automatically handle scheduled pauses and stops
 def run_scheduler():
-    global paused
+    global paused, stop_time, resume_time  # Declare these variables as global
     while True:
         now = datetime.now()
 
@@ -87,22 +89,29 @@ def run_scheduler():
         time.sleep(1)
 
 def main():
-    global stop_time, resume_time
-    threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()
+    global stop_time, resume_time, random_numbers
+    
+    start_now = input("Enter start time (HH:MM AM/PM): ")
+    stop_now = input("Enter stop time (HH:MM AM/PM): ")
 
-    start_now = input("Type '.start' to begin counting: ").strip().lower()
+    # Set the times based on user input
+    try:
+        if start_now:
+            start_time = datetime.strptime(start_now, "%I:%M %p").time()
+            print(f"Counting will start at {start_time.strftime('%I:%M %p')}")
+            time.sleep(10)  # Delay before starting
+        if stop_now:
+            stop_time = datetime.strptime(stop_now, "%I:%M %p").time()
+            print(f"Scheduled to stop at {stop_time.strftime('%I:%M %p')}")
 
-    if start_now != '.start':
-        print("You must type '.start' to begin.")
+    except ValueError:
+        print("Invalid time format.")
         return
 
-    print(f"{Fore.LIGHTGREEN_EX}Resuming in 10 seconds...{Style.RESET_ALL}")
-    time.sleep(10)  # Wait for 10 seconds before starting
-
-    count_limit = 500000
-    random_numbers = generate_random_number_list(1, count_limit)
+    random_numbers = generate_random_number_list(1, 500000)
 
     threading.Thread(target=run_scheduler, daemon=True).start()  # Start the scheduler in a separate thread
+    threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()  # Add hotkey for pause
 
     for number in random_numbers:
         while paused:  # Wait if paused
