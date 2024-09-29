@@ -10,15 +10,20 @@ from colorama import init, Fore, Style
 init()
 
 paused = False
+stop_time_reached = False
 
 # Function to toggle pause state using 'End' key
 def toggle_pause():
-    global paused
-    paused = not paused
+    global paused, stop_time_reached
     if paused:
-        print(f"{Fore.LIGHTRED_EX}PAUSED{Style.RESET_ALL} - Click END to resume")
-    else:
+        # Resume logic
+        paused = False
+        stop_time_reached = False
         print(f"{Fore.LIGHTGREEN_EX}RUNNING{Style.RESET_ALL} - Click END to pause")
+    else:
+        # Pause logic
+        paused = True
+        print(f"{Fore.LIGHTRED_EX}PAUSED{Style.RESET_ALL} - Click END again to resume, or Del to set a different stop time")
 
 # Generate a shuffled list of numbers ending in 8 up to 500,000
 def generate_random_number_list(start, end):
@@ -38,16 +43,6 @@ def type_with_delay(text):
         pyautogui.typewrite(char)  # Type the character
         time.sleep(0.05)  # Delay between characters
     pyautogui.press('enter')  # Simulate pressing Enter
-
-# Check if it's nighttime (11 PM - 11 AM) with a 13-minute random buffer
-def is_night_time():
-    current_hour = datetime.now().hour
-    current_minute = datetime.now().minute
-    if 23 <= current_hour or (current_hour == 11 and current_minute < random.randint(0, 13)):
-        return True
-    elif current_hour < 11 or (current_hour == 11 and current_minute >= random.randint(0, 13)):
-        return False
-    return False
 
 # Countdown timer for a given number of seconds
 def countdown_timer(seconds):
@@ -81,7 +76,10 @@ def schedule_prompt():
     # Handle the start and stop times
     if start_time:
         wait_until_start(start_time)
-    
+    else:
+        print(f"{Fore.LIGHTGREEN_EX}Resuming in 10 seconds...{Style.RESET_ALL}")
+        countdown_timer(10)  # Wait for 10 seconds before starting
+
     return stop_time
 
 # Wait until the scheduled start time
@@ -98,6 +96,7 @@ def wait_until_start(start_time):
 
 # Pause the script until the scheduled stop time
 def wait_until_stop(stop_time):
+    global stop_time_reached
     now = datetime.now()
     stop_datetime = datetime.combine(now.date(), stop_time)
     
@@ -107,8 +106,9 @@ def wait_until_stop(stop_time):
     while datetime.now() < stop_datetime:
         time.sleep(1)  # Sleep in 1-second intervals until the stop time is reached
 
-    print(f"{Fore.LIGHTRED_EX}STOPPED at {stop_datetime.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
-    paused = True
+    print(f"{Fore.LIGHTRED_EX}Automatically Stopping - Didn't resume before designated stop time. Resuming at {stop_datetime.strftime('%H:%M')}{Style.RESET_ALL}")
+    stop_time_reached = True
+    paused = True  # Pause the script after reaching the stop time
 
 # Main function to handle the counting process
 def main():
@@ -132,7 +132,7 @@ def main():
         print(f"{Fore.LIGHTGREEN_EX}Successfully Sent: {number}{Style.RESET_ALL}")
         time.sleep(get_random_interval())  # Wait for a random interval
 
-        if stop_time:
+        if stop_time and not stop_time_reached:
             wait_until_stop(stop_time)  # Wait until the stop time
 
 if __name__ == "__main__":
