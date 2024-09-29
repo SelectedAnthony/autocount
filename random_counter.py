@@ -27,9 +27,9 @@ def toggle_pause():
     global paused
     paused = not paused
     if paused:
-        print(f"{Fore.RED}PAUSED{Style.RESET_ALL} - Click END to resume")
+        print(f"{Fore.LIGHTRED_EX}PAUSED{Style.RESET_ALL} - Click END to resume")
     else:
-        print(f"{Fore.GREEN}RUNNING{Style.RESET_ALL} - Click END to pause")
+        print(f"{Fore.LIGHTGREEN_EX}RUNNING{Style.RESET_ALL} - Click END to pause")
 
 def generate_random_number_list(start, end):
     numbers = [i for i in range(start, end + 1) if i % 10 == 8]
@@ -89,22 +89,40 @@ def pause_until(resume_time):
         time.sleep(1)
     if not override_pause:  # Only unpause automatically if not manually overridden
         paused = False
-        print(f"{Fore.GREEN}Resumed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+        print(f"{Fore.LIGHTGREEN_EX}Resumed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
 
-def override_manual_pause():
+def override_manual_pause_with_custom_time():
     global paused, manual_resume, override_pause
-    paused = False
-    manual_resume = True
-    override_pause = True
-    resume_time = calculate_resume_time()
-    print(f"{Fore.GREEN}Schedule Overridden - Will pause at {resume_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+
+    # Ask user for a custom stop time
+    stop_time_str = input("Enter the custom time to pause (HH:MM): ")
+    try:
+        stop_time = datetime.strptime(stop_time_str, "%H:%M").time()
+        now = datetime.now()
+
+        # Combine today's date with the entered time to create the resume time
+        resume_time = datetime.combine(now.date(), stop_time)
+
+        # If the entered time is earlier in the day, schedule for the next day
+        if resume_time < now:
+            resume_time += timedelta(days=1)
+
+        # Override and set custom pause time
+        paused = False
+        manual_resume = True
+        override_pause = True
+        print(f"{Fore.LIGHTGREEN_EX}Schedule Overridden - Will pause at {resume_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+        pause_until(resume_time)
+
+    except ValueError:
+        print("Invalid time format. Please use HH:MM format.")
 
 def main():
     global paused, manual_resume, override_pause
 
     # Set up hotkeys
     threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()  # Pause/resume with END key
-    threading.Thread(target=lambda: keyboard.add_hotkey('del', override_manual_pause)).start()  # Manual resume override with DEL key
+    threading.Thread(target=lambda: keyboard.add_hotkey('del', override_manual_pause_with_custom_time)).start()  # Manual resume override with DEL key
     threading.Thread(target=handle_scheduled_pause, daemon=True).start()  # Schedule handling
 
     input("Type '.start' to begin counting: ")
@@ -121,7 +139,7 @@ def main():
         # Type the output with delay
         type_with_delay(str(number))
 
-        print(f"{Fore.GREEN}Successfully Sent: {number}{Style.RESET_ALL}")
+        print(f"{Fore.LIGHTGREEN_EX}Successfully Sent: {number}{Style.RESET_ALL}")
         time.sleep(get_random_interval())
 
 if __name__ == "__main__":
