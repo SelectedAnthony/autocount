@@ -4,9 +4,14 @@ import threading
 import pyautogui
 import keyboard
 from datetime import datetime, timedelta
+from colorama import init, Fore, Style
+
+# Initialize colorama
+init()
 
 paused = False
 manual_resume = False
+override_pause = False  # For tracking if pause was manually overridden
 
 # Configuration
 active_duration = 20 * 60  # 20 minutes in seconds
@@ -21,8 +26,10 @@ buffer_minutes = 13  # Allow random buffer up to 13 minutes
 def toggle_pause():
     global paused
     paused = not paused
-    status = "PAUSED" if paused else "RUNNING"
-    print(f"{status} - Click END to {'resume' if paused else 'pause'}")
+    if paused:
+        print(f"{Fore.RED}PAUSED{Style.RESET_ALL} - Click END to resume")
+    else:
+        print(f"{Fore.GREEN}RUNNING{Style.RESET_ALL} - Click END to pause")
 
 def generate_random_number_list(start, end):
     numbers = [i for i in range(start, end + 1) if i % 10 == 8]
@@ -62,10 +69,9 @@ def calculate_resume_time():
     return datetime.now() + timedelta(seconds=pause_duration)
 
 def handle_scheduled_pause():
-    global paused
-    global manual_resume
+    global paused, manual_resume, override_pause
     while True:
-        if not paused and not manual_resume:  # Only auto-pause if not manually resumed
+        if not paused and not manual_resume and not override_pause:  # Only auto-pause if not manually resumed or overridden
             if is_night_time():
                 random_start_minute = random.randint(0, buffer_minutes)
                 print(f"Pausing due to night time. Will resume between 11:00 AM and 11:{random_start_minute} AM.")
@@ -77,19 +83,29 @@ def handle_scheduled_pause():
         time.sleep(1)  # Check every second
 
 def pause_until(resume_time):
-    global paused
+    global paused, override_pause
     paused = True
-    while datetime.now() < resume_time and not manual_resume:
+    while datetime.now() < resume_time and not manual_resume and not override_pause:
         time.sleep(1)
-    if not manual_resume:
+    if not override_pause:  # Only unpause automatically if not manually overridden
         paused = False
-        print(f"Resumed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"{Fore.GREEN}Resumed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+
+def override_manual_pause():
+    global paused, manual_resume, override_pause
+    paused = False
+    manual_resume = True
+    override_pause = True
+    resume_time = calculate_resume_time()
+    print(f"{Fore.GREEN}Schedule Overridden - Will pause at {resume_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
 
 def main():
-    global paused, manual_resume
+    global paused, manual_resume, override_pause
 
-    threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()
-    threading.Thread(target=handle_scheduled_pause, daemon=True).start()
+    # Set up hotkeys
+    threading.Thread(target=lambda: keyboard.add_hotkey('end', toggle_pause)).start()  # Pause/resume with END key
+    threading.Thread(target=lambda: keyboard.add_hotkey('del', override_manual_pause)).start()  # Manual resume override with DEL key
+    threading.Thread(target=handle_scheduled_pause, daemon=True).start()  # Schedule handling
 
     input("Type '.start' to begin counting: ")
 
@@ -105,13 +121,8 @@ def main():
         # Type the output with delay
         type_with_delay(str(number))
 
-        print(f"Successfully Sent: {number}")
+        print(f"{Fore.GREEN}Successfully Sent: {number}{Style.RESET_ALL}")
         time.sleep(get_random_interval())
-
-        if keyboard.is_pressed('.resume'):
-            print("Resuming immediately due to manual input.")
-            paused = False
-            manual_resume = True
 
 if __name__ == "__main__":
     main()
