@@ -106,7 +106,8 @@ def wait_until_stop(stop_time):
     while datetime.now() < stop_datetime:
         time.sleep(1)  # Sleep in 1-second intervals until the stop time is reached
 
-    print(f"{Fore.LIGHTRED_EX}Automatically Stopping - Didn't resume before designated stop time. Resuming at {stop_datetime.strftime('%H:%M')}{Style.RESET_ALL}")
+    print(f"{Fore.LIGHTRED_EX}Automatically Stopping - Didn't resume before designated stop time.{Style.RESET_ALL}")
+    print(f"Pause. Click Del to set a new stop time.")
     stop_time_reached = True
     paused = True  # Pause the script after reaching the stop time
 
@@ -134,6 +135,16 @@ def main():
 
         if stop_time and not stop_time_reached:
             wait_until_stop(stop_time)  # Wait until the stop time
+
+        # If paused after reaching stop time
+        if paused and stop_time_reached:
+            new_stop_time_input = input("Set a new stop time (HH:MM) or press Enter to keep paused: ")
+            if new_stop_time_input:
+                try:
+                    stop_time = datetime.strptime(new_stop_time_input, "%H:%M").time()
+                    print(f"New stop time set at {stop_time}.")
+                except ValueError:
+                    print("Invalid stop time format. Keeping previous stop time.")
 
 if __name__ == "__main__":
     main()
